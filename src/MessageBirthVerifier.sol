@@ -1,41 +1,33 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
 /**
  * A very simple contract which stores message hashes (sha3),
  * when they are created (born) and who sent them.
  * In the contract are kept only messages hashes. There is no messages in plain text here.
- * You can use the contract to verify that someone created a message she/he sent to you
- * in plain text, on certain date.
+ * You can use the contract to verify that someone created a message, on a certain date.
  */
 contract MessageBirthVerifier {
     address private creator;
 
     /**
-     * sender - the sender of the message hash.
-     * timestamp - timestamp when the contract received the message hash.
-     */
-    struct MessageEvent {address sender; uint64 timestamp;}
-
-    /**
     * The main data structure of the contract.
     * The key is the sha3 (keccak256) of the message.
-    * The value is an array of MessageEvents.
-    * This mapping allows us to handle the case when the same message hash
-    * is sent more than ones.
+    * The value is another map which key is the address of the sender
+    * and the value is an array of timestamps - when that message has been
+    * sent from that address. If the message is sent only once the array will
+    * contain only one timestamp.
+    * Those mappings allow us to handle the case when the same message hash
+    * is sent more than once including from the same sender.
     */
-    mapping(bytes32 => MessageEvent[]) public messages;
+    mapping(bytes32 => mapping(address => uint[])) public hashAddressTimestamps;
 
-    function SimpleMessageVerifier() {
+    function SimpleMessageVerifier() public {
         creator = msg.sender;
     }
 
     function storeMessageHash(bytes32 messageHash) public {
-        messages[messageHash].push(MessageEvent({sender: msg.sender, timestamp: now}));
+        hashAddressTimestamps[messageHash][msg.sender].push(now);
     }
 
-    function verify(bytes32 messageHash) {
-        return messages[messageHash];
-    }
-
-    function kill() { if (msg.sender == creator) suicide(creator); }
+    function kill() public { if (msg.sender == creator) selfdestruct(creator); }
 }
