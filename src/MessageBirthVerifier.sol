@@ -21,12 +21,16 @@ contract MessageBirthVerifier {
     */
     mapping(bytes32 => mapping(address => uint[])) public hashAddressTimestamps;
 
+    event NewMessageBorn(address sender, bytes32 messageHash, uint timestamp);
+
     function SimpleMessageVerifier() public {
         creator = msg.sender;
     }
 
     function storeMessageHash(bytes32 messageHash) public {
-        hashAddressTimestamps[messageHash][msg.sender].push(now);
+        uint memory timestamp = now;
+        hashAddressTimestamps[messageHash][msg.sender].push(timestamp);
+        NewMessageBorn(msg.sender, messageHash, timestamp);
     }
 
     function kill() public { if (msg.sender == creator) selfdestruct(creator); }
